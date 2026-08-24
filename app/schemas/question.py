@@ -1,16 +1,17 @@
-from pydantic import BaseModel
+from app.schemas.common import Schema
 
 
-class AnswerOut(BaseModel):
+class AnswerOut(Schema):
     id: int
     code: str
     content: str
+    descr: str | None
     weight: int
     recommendation: str | None
     ord: int
 
 
-class QuestionOut(BaseModel):
+class QuestionOut(Schema):
     id: int
     step_id: int
     code: str

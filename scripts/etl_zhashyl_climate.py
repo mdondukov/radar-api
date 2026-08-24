@@ -138,6 +138,7 @@ async def load_target(db: AsyncSession, project: Project, src: dict[str, Any]) -
                 project_id=project.id,
                 code=f"region-{r['id']}",
                 name=merge_translations(r["name"], lang and lang.get("name")),
+                descr=merge_translations(r["descr"], lang and lang.get("descr")),
                 ord=i,
             )
         )

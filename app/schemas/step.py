@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from app.schemas.common import Schema
 
 
-class StepOut(BaseModel):
+class StepOut(Schema):
     id: int
     code: str
     name: str

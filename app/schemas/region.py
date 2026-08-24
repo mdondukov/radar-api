@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from app.schemas.common import Schema
 
 
-class AreaOut(BaseModel):
+class AreaOut(Schema):
     id: int
     code: str
     name: str
@@ -10,8 +10,9 @@ class AreaOut(BaseModel):
     ord: int
 
 
-class RegionOut(BaseModel):
+class RegionOut(Schema):
     id: int
     code: str
     name: str
+    descr: str | None
     areas: list[AreaOut]

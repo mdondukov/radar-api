@@ -1,21 +1,25 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from app.schemas.common import Schema
 
 
-class AnswerSelectIn(BaseModel):
+class AnswerSelectIn(Schema):
     step_id: int
     question_id: int
     answer_id: int
 
 
-class SummaryRequestIn(BaseModel):
-    region_id: int | None = None
-    area_id: int | None = None
+class RegionSelectIn(Schema):
+    region_id: int
+    area_id: int
+
+
+class SummaryRequestIn(Schema):
+    region: RegionSelectIn | None = None
     answers: list[AnswerSelectIn]
 
 
-class IndicatorOut(BaseModel):
+class IndicatorOut(Schema):
     code: str
     name: str
     value: float
@@ -23,5 +27,5 @@ class IndicatorOut(BaseModel):
     risk_text: str | None
 
 
-class SummaryOut(BaseModel):
+class SummaryOut(Schema):
     indicators: list[IndicatorOut]

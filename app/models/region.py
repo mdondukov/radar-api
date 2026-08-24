@@ -15,6 +15,7 @@ class Region(Base):
     )
     code: Mapped[str] = mapped_column(String(64))
     name: Mapped[dict[str, str]] = mapped_column(JSONB)
+    descr: Mapped[dict[str, str] | None] = mapped_column(JSONB, nullable=True)
     ord: Mapped[int] = mapped_column(Integer)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
