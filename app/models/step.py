@@ -24,6 +24,10 @@ class Step(Base):
     )
     code: Mapped[str] = mapped_column(String(64))
     name: Mapped[dict[str, str]] = mapped_column(JSONB)
+    # shown right under the step name, while answering (not gated by completion)
+    intro: Mapped[dict[str, str] | None] = mapped_column(JSONB, nullable=True)
+    # shown on the Resume screen once the step's questions are all answered, regardless
+    # of which answers were picked
     descr: Mapped[dict[str, str] | None] = mapped_column(JSONB, nullable=True)
     type: Mapped[StepType] = mapped_column(SqlEnum(StepType, name="step_type"))
     next_step_id: Mapped[int | None] = mapped_column(ForeignKey("step.id"), nullable=True)

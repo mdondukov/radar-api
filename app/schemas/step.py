@@ -5,6 +5,7 @@ class StepOut(Schema):
     id: int
     code: str
     name: str
+    intro: str | None
     descr: str | None
     type: str
     next_step_id: int | None

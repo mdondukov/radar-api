@@ -20,6 +20,7 @@ async def get_steps(db: AsyncSession, project: Project, locale: str) -> list[Ste
             id=s.id,
             code=s.code,
             name=localize_required(s.name, locale, project.default_locale),
+            intro=localize(s.intro, locale, project.default_locale),
             descr=localize(s.descr, locale, project.default_locale),
             type=s.type.value,
             next_step_id=s.next_step_id,
