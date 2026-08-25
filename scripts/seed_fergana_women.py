@@ -24,8 +24,10 @@ from app.models.step import StepType
 DATA_PATH = Path(__file__).parent / "data" / "fergana_women.json"
 
 
-def loc(text: str | None) -> dict[str, str] | None:
-    return {"ru": text} if text else None
+def loc(value: dict[str, str] | None) -> dict[str, str] | None:
+    """The JSON already stores localized text as {"ru": ..., "ky": ...} (or null) —
+    this just documents the shape passed through to each model field."""
+    return value
 
 
 async def replace_project(db: AsyncSession, code: str, name: str) -> Project:
