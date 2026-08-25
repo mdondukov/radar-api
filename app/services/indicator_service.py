@@ -63,6 +63,7 @@ async def compute_indicators(
         result.append(
             IndicatorOut(
                 code=indicator.code,
+                step_id=indicator.step_id,
                 name=localize_required(indicator.name, locale, project.default_locale),
                 value=value,
                 risk_zone=zone,

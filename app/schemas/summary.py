@@ -21,6 +21,7 @@ class SummaryRequestIn(Schema):
 
 class IndicatorOut(Schema):
     code: str
+    step_id: int
     name: str
     value: float
     risk_zone: Literal["high", "medium", "low"]
