@@ -3,8 +3,19 @@
 Backend for the "radar" product family — self-assessment questionnaires
 scored across several indicators and visualized as a radar chart. Replaces
 the previous Kotlin/Spring `calc` service and is built so that a single
-backend can serve several independent radar frontends (`calc-web` — "Жашыл
-климат", `fergana-women` — "Женщины Ферганы", and more to come).
+backend can serve several independent radar frontends off one deployment,
+distinguished only by `project_code`:
+
+- `calc-web` (deployed at `radar.biom.kg`) serves project `zhashyl-climate`
+  — "Жашыл климат".
+- `radar-women` (deployed at `radar-women.biom.kg`, a separate frontend
+  repo cloned from `calc-web` and re-themed) serves project
+  `fergana-women` — "Женщины Ферганы".
+
+Both frontends call this same API instance (`https://radar.biom.kg/radar/`)
+cross-origin, so `RADAR_CORS_ORIGINS` in production must list every
+frontend's own domain, not just the one the API happens to be path-mounted
+under.
 
 ## Stack
 
@@ -93,8 +104,13 @@ app/
 alembic/       — migrations
 tests/         — pytest suite (see Testing below)
 scripts/
-  seed_demo.py            — inserts a minimal demo project for manual API checks
-  etl_zhashyl_climate.py  — one-off import of the legacy "Жашыл климат" data
+  seed_demo.py               — inserts a minimal demo project for manual API checks
+  etl_zhashyl_climate.py     — one-off import of the legacy "Жашыл климат" data
+  seed_fergana_women.py      — (re-)loads "Женщины Ферганы" from scripts/data/fergana_women.json
+  copy_regions_to_fergana.py — copies the Region/Area tree into fergana-women (see below)
+  data/fergana_women.json    — the questionnaire content itself, ru+ky
+docs/
+  fergana-women-content-spec.md — mapping notes from the source PDF/docx to the JSON above
 ```
 
 ## Build
@@ -116,8 +132,30 @@ scripts/
 The image doesn't drag anything extra into the build: the Dockerfile only
 copies `pyproject.toml`/`uv.lock`/`app`/`alembic`/`alembic.ini`, so a heavy
 local `.venv` or caches sitting in the build context don't matter (BuildKit
-doesn't upload files that are never referenced). Deployment itself happens
-through GitHub (CI), not by pushing files to a server by hand.
+doesn't upload files that are never referenced).
+
+There's no CI yet (see "Not done yet"), so deployment is manual: build the
+image locally, transfer it to the server's Docker daemon, then recreate the
+`radar-api` service in the shared `docker-compose.yml` at
+`/opt/docker/compose/biom_app/` (which also runs `postgres`, `calc-web`,
+`radar-women` and a couple of unrelated apps behind one host nginx +
+Certbot per domain):
+
+```bash
+./scripts/build-image.sh kg.biom/radar-api:dev
+docker save kg.biom/radar-api:dev | ssh aws.biom.node1 "docker load"
+ssh aws.biom.node1 "cd /opt/docker/compose/biom_app && \
+  docker compose up -d --force-recreate radar-api && \
+  docker compose restart proxy"   # the proxy container caches the old IP otherwise
+```
+
+Migrations run the same way, against the tunnelled prod DB (see "Running
+locally" for the tunnel):
+
+```bash
+RADAR_DATABASE_URL="postgresql+asyncpg://<user>:<pass>@localhost:5441/radar" \
+  uv run alembic upgrade head
+```
 
 ## Running locally
 
@@ -220,13 +258,41 @@ Idempotent: the script drops `project(code='zhashyl-climate')` wholesale
 (`ON DELETE CASCADE` clears every child row) and reloads it — safe to
 re-run any number of times.
 
+## Done: "Женщины Ферганы" seed
+
+Unlike "Жашыл климат", there's no legacy database to ETL from — the
+questionnaire only ever existed as a PDF/docx, hand-transcribed into
+`scripts/data/fergana_women.json` (mapping decisions are in
+`docs/fergana-women-content-spec.md`). Every localizable field in that JSON
+is `{"ru": "...", "ky": "..."}` (or `null`), loaded as-is (`seed_fergana_women.py`'s
+`loc()` is a pure passthrough — the JSON already has the shape the DB wants).
+
+```bash
+PYTHONPATH=. uv run python scripts/seed_fergana_women.py
+PYTHONPATH=. uv run python scripts/copy_regions_to_fergana.py
+```
+
+**Both scripts must be run together, in that order, every time** —
+`seed_fergana_women.py` replaces `project(code='fergana-women')` wholesale
+(`delete(Project)...`, same idempotent pattern as the zhashyl-climate ETL),
+and the cascade wipes any Region/Area rows and the REGION step, since those
+were added by the *other* script. `copy_regions_to_fergana.py` copies the
+Region/Area tree from `zhashyl-climate` verbatim under new PKs (fergana-women
+intentionally reuses the exact same regions — same physical breakdown of
+Kyrgyzstan, confirmed with the project owner) and inserts a REGION step at
+the front of the step chain. Content currently loaded: 9 indicators, 100
+questions, 390 answers, plus the region step and the radar step — 11 steps
+total.
+
+The questionnaire also has a few multi-select questions and per-answer
+`recommendation` texts (see "Multi-select questions" above) — both worked
+without any schema changes, since the original model already carried a
+`weight` and an optional `recommendation` per answer.
+
 ## Not done yet
 
-- **"Женщины Ферганы" data**: seeding the questionnaire (9 indicators,
-  ~105 questions, per-answer recommendation texts and risk-zone
-  narratives) — a candidate for its own seeding script modeled on
-  `etl_zhashyl_climate.py`/`seed_demo.py` (there's no source database for
-  it — the questionnaire only exists as a PDF).
 - CI (GitHub Actions) to actually build/push the image and deploy.
 - An admin UI, or at least CLI scripts, for content CRUD (right now the
-  only way to populate or fix data is to write SQL/Python scripts).
+  only way to populate or fix data is to write SQL/Python scripts, and
+  reseeding "Женщины Ферганы" requires remembering to re-run
+  `copy_regions_to_fergana.py` afterwards — see above).
