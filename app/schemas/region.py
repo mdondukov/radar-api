@@ -15,4 +15,5 @@ class RegionOut(Schema):
     code: str
     name: str
     descr: str | None
+    ord: int
     areas: list[AreaOut]

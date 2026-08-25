@@ -55,6 +55,7 @@ async def get_regions(db: AsyncSession, project: Project, locale: str) -> list[R
             code=region.code,
             name=localize_required(region.name, locale, project.default_locale),
             descr=localize(region.descr, locale, project.default_locale),
+            ord=region.ord,
             areas=[
                 AreaOut(
                     id=a.id,
