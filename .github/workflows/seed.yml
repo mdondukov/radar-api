@@ -1,0 +1,75 @@
+name: Seed fergana-women content
+
+# Replaces the questionnaire content of project `fergana-women` in production
+# with whatever scripts/data/fergana_women.json holds at the chosen ref.
+#
+# Safe to re-run: the two scripts are idempotent, and the database stores no
+# user submissions (answers travel from the browser to POST /summary and are
+# never persisted). Both scripts must run, in this order —
+# seed_fergana_women.py replaces the project wholesale and the cascade takes
+# the Region/Area rows and the REGION step with it, which the second script
+# puts back.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or SHA whose content to load
+        required: false
+        default: dev
+      confirm:
+        description: Type "seed" to confirm rewriting production content
+        required: true
+        default: ""
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Check confirmation
+        if: inputs.confirm != 'seed'
+        run: |
+          echo 'Refusing: type "seed" in the confirm field to run this.' >&2
+          exit 1
+
+      - name: Run the seed scripts on the server
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          REF: ${{ inputs.ref }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" "
+            set -e
+            cd ~/projects/radar-api
+            git fetch --all --prune
+            git checkout '$REF'
+            git pull --ff-only || true
+
+            cd /opt/docker/compose/biom_app
+            # The image ships only app/ and alembic/, so the scripts and their
+            # JSON come from the checkout above; the entrypoint is uvicorn, hence
+            # --entrypoint.
+            run_script() {
+              docker compose run --rm --no-deps \
+                --entrypoint /app/.venv/bin/python \
+                -v \$HOME/projects/radar-api/scripts:/app/scripts \
+                -w /app -e PYTHONPATH=/app \
+                radar-api \"scripts/\$1\"
+            }
+            run_script seed_fergana_women.py
+            run_script copy_regions_to_fergana.py
+          "
+
+      - name: Verify the content is served
+        run: |
+          steps=$(curl -s -H 'locale: ru' \
+            https://radar.biom.kg/radar/v1/fergana-women/poll/steps |
+            python3 -c 'import json,sys; print(len(json.load(sys.stdin)["data"]))')
+          echo "steps served: $steps"
+          [ "$steps" -ge 2 ] || { echo "unexpected step count" >&2; exit 1; }

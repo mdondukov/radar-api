@@ -298,9 +298,29 @@ The questionnaire also has a few multi-select questions and per-answer
 without any schema changes, since the original model already carried a
 `weight` and an optional `recommendation` per answer.
 
+## CI/CD
+
+`.github/workflows/` holds three workflows, all running on `ubuntu-24.04-arm`
+because production is aarch64 — building on the same architecture means CI
+tests what actually ships, and no QEMU is involved.
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | push to `dev`/`main`, any PR | ruff, mypy --strict, pytest against a real Postgres 17 service |
+| `deploy.yml` | manual (`workflow_dispatch`) | builds `linux/arm64`, pushes `ghcr.io/<owner>/radar-api:dev` + `:sha-<short>`, then over SSH: `docker compose pull` / `up -d` / `restart proxy` / `image prune`, then a health check |
+| `seed.yml` | manual, needs `confirm: seed` | re-runs `seed_fergana_women.py` + `copy_regions_to_fergana.py` on the server against the chosen ref |
+
+Deployment is deliberately manual rather than push-to-deploy: an API release
+often has to be paired with a content re-seed, and the two are separate
+workflows on purpose.
+
+Repository secrets used by both deploying workflows: `DEPLOY_HOST`,
+`DEPLOY_USER`, `DEPLOY_SSH_KEY` (a dedicated ed25519 key, not a personal one).
+Rolling back is `docker compose up -d` on the server with the image pinned to
+an older `:sha-…` tag — every deploy publishes one.
+
 ## Not done yet
 
-- CI (GitHub Actions) to actually build/push the image and deploy.
 - An admin UI, or at least CLI scripts, for content CRUD (right now the
   only way to populate or fix data is to write SQL/Python scripts, and
   reseeding "Женщины Ферганы" requires remembering to re-run
