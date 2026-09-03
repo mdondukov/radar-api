@@ -83,6 +83,15 @@ changes / `project_code` is added to the path).
 Locale is still the `locale` header (see `app/api/deps.py`), matching the
 original service.
 
+An optional `secondary-locale` header asks for a second language in the same
+response: every localized field gets a `*Secondary` twin (`contentSecondary`,
+`riskTextSecondary`, ...). radar-women uses it to print the Kyrgyz mirror
+under every question and to let the reader flip the prose blocks between
+languages without reloading. The mirror never falls back to the project
+default — a missing translation comes back empty rather than repeating the
+primary text — and clients that don't send the header (calc-web) get those
+fields as null.
+
 ## Multi-select questions
 
 A question with multiple selectable answers (used in the "Женщины Ферганы"
