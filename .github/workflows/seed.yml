@@ -15,7 +15,7 @@ on:
       ref:
         description: Branch, tag or SHA whose content to load
         required: false
-        default: dev
+        default: main
       confirm:
         description: Type "seed" to confirm rewriting production content
         required: true

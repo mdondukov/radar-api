@@ -306,7 +306,7 @@ tests what actually ships, and no QEMU is involved.
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `ci.yml` | push to `dev`/`main`, any PR | ruff, mypy --strict, pytest against a real Postgres 17 service |
+| `ci.yml` | push to `main`, any PR | ruff, mypy --strict, pytest against a real Postgres 17 service |
 | `deploy.yml` | manual (`workflow_dispatch`) | builds `linux/arm64`, pushes `ghcr.io/<owner>/radar-api:dev` + `:sha-<short>`, then over SSH: `docker compose pull` / `up -d` / `restart proxy` / `image prune`, then a health check |
 | `seed.yml` | manual, needs `confirm: seed` | re-runs `seed_fergana_women.py` + `copy_regions_to_fergana.py` on the server against the chosen ref |
 
