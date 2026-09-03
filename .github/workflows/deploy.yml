@@ -80,7 +80,7 @@ jobs:
 
       - name: Smoke check
         run: |
-          for i in $(seq 1 10); do
+          for _ in $(seq 1 10); do
             code=$(curl -s -o /dev/null -w '%{http_code}' https://radar.biom.kg/radar/health) || true
             [ "$code" = "200" ] && echo "health: 200" && exit 0
             sleep 3
