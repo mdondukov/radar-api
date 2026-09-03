@@ -60,13 +60,18 @@ async def make_indicator(
 
 
 async def make_question(
-    db: AsyncSession, project: Project, step: Step, *, is_multi_select: bool = False
+    db: AsyncSession,
+    project: Project,
+    step: Step,
+    *,
+    is_multi_select: bool = False,
+    content: dict[str, str] | None = None,
 ) -> Question:
     question = Question(
         project_id=project.id,
         step_id=step.id,
         code=_unique("question"),
-        content={"ru": "Вопрос"},
+        content=content or {"ru": "Вопрос"},
         is_multi_select=is_multi_select,
         ord=1,
     )
@@ -83,12 +88,13 @@ async def make_answer(
     weight: int,
     ord: int = 1,
     recommendation: dict[str, str] | None = None,
+    content: dict[str, str] | None = None,
 ) -> Answer:
     answer = Answer(
         project_id=project.id,
         question_id=question.id,
         code=_unique("answer"),
-        content={"ru": f"weight {weight}"},
+        content=content or {"ru": f"weight {weight}"},
         weight=weight,
         ord=ord,
         recommendation=recommendation,

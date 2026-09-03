@@ -63,3 +63,44 @@ async def test_get_questions_nests_answers_with_recommendation_and_multi_select_
 
     assert result[0].is_multi_select is True
     assert [a.recommendation for a in result[0].answers] == ["Совет", None]
+
+
+async def test_get_questions_mirrors_content_when_a_secondary_locale_is_asked_for(
+    db_session: AsyncSession,
+) -> None:
+    project = await make_project(db_session)
+    step = await make_step(db_session, project)
+    question = await make_question(
+        db_session, project, step, content={"ru": "Вопрос", "ky": "Суроо"}
+    )
+    await make_answer(
+        db_session,
+        project,
+        question,
+        weight=3,
+        content={"ru": "да", "ky": "ооба"},
+        recommendation={"ru": "Совет", "ky": "Кеңеш"},
+    )
+
+    result = await poll_service.get_questions(db_session, project, "ru", "ky")
+
+    assert result[0].content == "Вопрос"
+    assert result[0].content_secondary == "Суроо"
+    assert result[0].answers[0].content_secondary == "ооба"
+    assert result[0].answers[0].recommendation_secondary == "Кеңеш"
+
+
+async def test_get_questions_leaves_mirror_empty_without_a_secondary_locale(
+    db_session: AsyncSession,
+) -> None:
+    project = await make_project(db_session)
+    step = await make_step(db_session, project)
+    question = await make_question(
+        db_session, project, step, content={"ru": "Вопрос", "ky": "Суроо"}
+    )
+    await make_answer(db_session, project, question, weight=3)
+
+    result = await poll_service.get_questions(db_session, project, "ru")
+
+    assert result[0].content_secondary is None
+    assert result[0].answers[0].content_secondary is None

@@ -310,11 +310,14 @@
 аддитивное, чтобы не ломать `calc-web`:
 
 - необязательный заголовок запроса `secondary-locale: ky`;
-- когда он передан, в ответ добавляются парные поля: `contentSecondary`,
-  `nameSecondary`, `introSecondary`, `descrSecondary`, `recommendationSecondary`,
-  `riskTextSecondary`, `impactSecondary` (camelCase на проводе — по общему контракту,
-  см. `app/schemas/common.py`);
-- без заголовка ответ не меняется ни на байт.
+- в ответе появляются парные поля: `contentSecondary`, `nameSecondary`,
+  `introSecondary`, `descrSecondary`, `recommendationSecondary`, `riskTextSecondary`,
+  `impactSecondary` (camelCase на проводе — по общему контракту, см.
+  `app/schemas/common.py`);
+- без заголовка эти поля приходят как `null`, то есть `calc-web` продолжает
+  получать ровно один язык и лишние ключи просто игнорирует;
+- зеркало **не** откатывается на язык по умолчанию: если перевода нет, поле
+  пустое. Иначе «кыргызская» строка молча показывала бы русский текст.
 
 Затрагивает `app/api/deps.py`, `app/schemas/{question,step,summary,region}.py`,
 `app/services/{poll_service,summary_service,indicator_service}.py`, `app/services/i18n.py`.

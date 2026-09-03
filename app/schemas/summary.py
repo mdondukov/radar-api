@@ -23,9 +23,11 @@ class IndicatorOut(Schema):
     code: str
     step_id: int
     name: str
+    name_secondary: str | None = None
     value: float
     risk_zone: Literal["high", "medium", "low"]
     risk_text: str | None
+    risk_text_secondary: str | None = None
 
 
 class SummaryOut(Schema):

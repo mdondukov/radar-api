@@ -5,10 +5,12 @@ from app.models import Answer, Area, Project, Question, Region, Step
 from app.schemas.question import AnswerOut, QuestionOut
 from app.schemas.region import AreaOut, RegionOut
 from app.schemas.step import StepOut
-from app.services.i18n import localize, localize_required
+from app.services.i18n import localize, localize_required, localize_secondary
 
 
-async def get_steps(db: AsyncSession, project: Project, locale: str) -> list[StepOut]:
+async def get_steps(
+    db: AsyncSession, project: Project, locale: str, secondary: str | None = None
+) -> list[StepOut]:
     stmt = (
         select(Step)
         .where(Step.project_id == project.id, Step.is_active.is_(True))
@@ -20,8 +22,11 @@ async def get_steps(db: AsyncSession, project: Project, locale: str) -> list[Ste
             id=s.id,
             code=s.code,
             name=localize_required(s.name, locale, project.default_locale),
+            name_secondary=localize_secondary(s.name, secondary),
             intro=localize(s.intro, locale, project.default_locale),
+            intro_secondary=localize_secondary(s.intro, secondary),
             descr=localize(s.descr, locale, project.default_locale),
+            descr_secondary=localize_secondary(s.descr, secondary),
             type=s.type.value,
             next_step_id=s.next_step_id,
         )
@@ -29,7 +34,9 @@ async def get_steps(db: AsyncSession, project: Project, locale: str) -> list[Ste
     ]
 
 
-async def get_regions(db: AsyncSession, project: Project, locale: str) -> list[RegionOut]:
+async def get_regions(
+    db: AsyncSession, project: Project, locale: str, secondary: str | None = None
+) -> list[RegionOut]:
     regions = (
         await db.scalars(
             select(Region)
@@ -54,15 +61,20 @@ async def get_regions(db: AsyncSession, project: Project, locale: str) -> list[R
             id=region.id,
             code=region.code,
             name=localize_required(region.name, locale, project.default_locale),
+            name_secondary=localize_secondary(region.name, secondary),
             descr=localize(region.descr, locale, project.default_locale),
+            descr_secondary=localize_secondary(region.descr, secondary),
             ord=region.ord,
             areas=[
                 AreaOut(
                     id=a.id,
                     code=a.code,
                     name=localize_required(a.name, locale, project.default_locale),
+                    name_secondary=localize_secondary(a.name, secondary),
                     descr=localize(a.descr, locale, project.default_locale),
+                    descr_secondary=localize_secondary(a.descr, secondary),
                     impact=localize(a.impact, locale, project.default_locale),
+                    impact_secondary=localize_secondary(a.impact, secondary),
                     ord=a.ord,
                 )
                 for a in areas_by_region.get(region.id, [])
@@ -72,7 +84,9 @@ async def get_regions(db: AsyncSession, project: Project, locale: str) -> list[R
     ]
 
 
-async def get_questions(db: AsyncSession, project: Project, locale: str) -> list[QuestionOut]:
+async def get_questions(
+    db: AsyncSession, project: Project, locale: str, secondary: str | None = None
+) -> list[QuestionOut]:
     questions = (
         await db.scalars(
             select(Question)
@@ -98,16 +112,21 @@ async def get_questions(db: AsyncSession, project: Project, locale: str) -> list
             step_id=q.step_id,
             code=q.code,
             content=localize_required(q.content, locale, project.default_locale),
+            content_secondary=localize_secondary(q.content, secondary),
             descr=localize(q.descr, locale, project.default_locale),
+            descr_secondary=localize_secondary(q.descr, secondary),
             is_multi_select=q.is_multi_select,
             answers=[
                 AnswerOut(
                     id=a.id,
                     code=a.code,
                     content=localize_required(a.content, locale, project.default_locale),
+                    content_secondary=localize_secondary(a.content, secondary),
                     descr=localize(a.descr, locale, project.default_locale),
+                    descr_secondary=localize_secondary(a.descr, secondary),
                     weight=a.weight,
                     recommendation=localize(a.recommendation, locale, project.default_locale),
+                    recommendation_secondary=localize_secondary(a.recommendation, secondary),
                     ord=a.ord,
                 )
                 for a in answers_by_question.get(q.id, [])
