@@ -81,3 +81,41 @@ async def test_locale_defaults_when_header_is_missing(
 
     assert response.status_code == 200
     assert response.json()["data"][0]["name"] == "Шаг"
+
+
+async def test_secondary_locale_header_adds_the_mirror_fields(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    project = await make_project(db_session)
+    step = await make_step(db_session, project, type_=StepType.ASSESSMENT)
+    question = await make_question(
+        db_session, project, step, content={"ru": "Вопрос", "ky": "Суроо"}
+    )
+    await make_answer(db_session, project, question, weight=3)
+
+    response = await client.get(
+        f"/v1/{project.code}/poll/assessment",
+        headers={"locale": "ru", "secondary-locale": "ky"},
+    )
+
+    question_json = response.json()["data"][0]
+    assert question_json["content"] == "Вопрос"
+    assert question_json["contentSecondary"] == "Суроо"
+
+
+async def test_response_carries_no_mirror_without_the_header(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """calc-web doesn't ask for a mirror and must keep seeing one language."""
+    project = await make_project(db_session)
+    step = await make_step(db_session, project, type_=StepType.ASSESSMENT)
+    question = await make_question(
+        db_session, project, step, content={"ru": "Вопрос", "ky": "Суроо"}
+    )
+    await make_answer(db_session, project, question, weight=3)
+
+    response = await client.get(
+        f"/v1/{project.code}/poll/assessment", headers={"locale": "ru"}
+    )
+
+    assert response.json()["data"][0]["contentSecondary"] is None

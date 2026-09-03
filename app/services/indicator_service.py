@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Answer, Indicator, Project
 from app.schemas.summary import AnswerSelectIn, IndicatorOut
-from app.services.i18n import localize, localize_required
+from app.services.i18n import localize, localize_required, localize_secondary
 
 RiskZone = Literal["high", "medium", "low"]
 
@@ -19,19 +19,26 @@ def _risk_zone(indicator: Indicator, value: float) -> RiskZone:
     return "low"
 
 
-def _risk_text(
-    indicator: Indicator, zone: RiskZone, locale: str, default_locale: str
-) -> str | None:
-    text_by_zone = {
+def _risk_text_source(indicator: Indicator, zone: RiskZone) -> dict[str, str] | None:
+    return {
         "high": indicator.high_risk_text,
         "medium": indicator.medium_risk_text,
         "low": indicator.low_risk_text,
-    }
-    return localize(text_by_zone[zone], locale, default_locale)
+    }[zone]
+
+
+def _risk_text(
+    indicator: Indicator, zone: RiskZone, locale: str, default_locale: str
+) -> str | None:
+    return localize(_risk_text_source(indicator, zone), locale, default_locale)
 
 
 async def compute_indicators(
-    db: AsyncSession, project: Project, locale: str, answers: list[AnswerSelectIn]
+    db: AsyncSession,
+    project: Project,
+    locale: str,
+    answers: list[AnswerSelectIn],
+    secondary: str | None = None,
 ) -> list[IndicatorOut]:
     indicators = (
         await db.scalars(
@@ -65,9 +72,13 @@ async def compute_indicators(
                 code=indicator.code,
                 step_id=indicator.step_id,
                 name=localize_required(indicator.name, locale, project.default_locale),
+                name_secondary=localize_secondary(indicator.name, secondary),
                 value=value,
                 risk_zone=zone,
                 risk_text=_risk_text(indicator, zone, locale, project.default_locale),
+                risk_text_secondary=localize_secondary(
+                    _risk_text_source(indicator, zone), secondary
+                ),
             )
         )
 

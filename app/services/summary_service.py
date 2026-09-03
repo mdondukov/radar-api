@@ -6,7 +6,13 @@ from app.services.indicator_service import compute_indicators
 
 
 async def get_summary(
-    db: AsyncSession, project: Project, locale: str, request: SummaryRequestIn
+    db: AsyncSession,
+    project: Project,
+    locale: str,
+    request: SummaryRequestIn,
+    secondary: str | None = None,
 ) -> SummaryOut:
-    indicators = await compute_indicators(db, project, locale, request.answers)
+    indicators = await compute_indicators(
+        db, project, locale, request.answers, secondary
+    )
     return SummaryOut(indicators=indicators)

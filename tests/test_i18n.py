@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.i18n import localize, localize_required
+from app.services.i18n import localize, localize_required, localize_secondary
 
 
 def test_prefers_the_requested_locale() -> None:
@@ -27,3 +27,18 @@ def test_required_variant_raises_when_nothing_is_translated() -> None:
 
 def test_required_variant_returns_the_text_when_present() -> None:
     assert localize_required({"ru": "Привет"}, "en", "ru") == "Привет"
+
+
+def test_secondary_returns_the_mirror_translation() -> None:
+    assert localize_secondary({"ru": "Привет", "ky": "Салам"}, "ky") == "Салам"
+
+
+def test_secondary_is_none_when_no_mirror_was_requested() -> None:
+    assert localize_secondary({"ru": "Привет", "ky": "Салам"}, None) is None
+
+
+def test_secondary_does_not_fall_back_to_another_language() -> None:
+    """A mirror with no translation stays empty — falling back would print the
+    primary text twice in what is supposed to be the other language."""
+    assert localize_secondary({"ru": "Привет"}, "ky") is None
+    assert localize_secondary(None, "ky") is None
