@@ -4,6 +4,7 @@ from app.models.project import Project
 from app.models.question import Answer, Question
 from app.models.region import Area, Region
 from app.models.step import Step, StepType
+from app.models.submission import Submission
 
 __all__ = [
     "Base",
@@ -15,4 +16,5 @@ __all__ = [
     "Question",
     "Answer",
     "Indicator",
+    "Submission",
 ]
