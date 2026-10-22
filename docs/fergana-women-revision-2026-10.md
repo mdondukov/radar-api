@@ -188,9 +188,19 @@ The Kyrgyz texts are now more detailed than the Russian ones in places (he expan
 recommendations). Accepted as is: the Russian text is the expert's and is not extended
 without her.
 
-Not covered yet: «Ирригациялык ресурстар жана инфраструктура» (he is checking it).
-
 After this round he gets a fresh control sheet with all current texts for a final review.
+
+### 3.7. Irrigation (22 October 2026)
+
+He filled the green «Правка кыргызского» column of the September sheet for 15 rows of
+«Ирригациялык ресурстар жана инфраструктура». Applied 11: the intro, the description,
+all three risk-zone texts and questions 7-12 (question 8 joined into one line). Fields
+edited in §3.1 are replaced in full.
+
+Not applied, as paste errors: rows 120, 122 and 124 (answers «плохо» and «есть отдельные
+сложности…» of question 1, and question 2) hold three paragraphs copied verbatim from his
+own high risk text (row 116); row 144 (question 6) holds the text of question 7. Asked him
+to resend if those rows really need changes.
 
 ---
 
