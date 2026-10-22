@@ -119,3 +119,54 @@ async def test_response_carries_no_mirror_without_the_header(
     )
 
     assert response.json()["data"][0]["contentSecondary"] is None
+
+
+async def test_summary_refuses_answers_the_project_does_not_have(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    # a page loaded before a re-seed keeps posting ids that no longer exist;
+    # scoring them would silently report zeros
+    project = await make_project(db_session)
+    step = await make_step(db_session, project, type_=StepType.ASSESSMENT)
+    await make_indicator(db_session, project, step)
+    question = await make_question(db_session, project, step)
+    answer = await make_answer(db_session, project, question, weight=3)
+
+    response = await client.post(
+        f"/v1/{project.code}/poll/summary",
+        json={
+            "answers": [
+                {"stepId": step.id, "questionId": question.id, "answerId": answer.id},
+                {"stepId": step.id, "questionId": question.id, "answerId": answer.id + 10_000},
+            ]
+        },
+    )
+
+    assert response.status_code == 409
+
+
+async def test_summary_refuses_another_projects_answers(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    project = await make_project(db_session)
+    step = await make_step(db_session, project, type_=StepType.ASSESSMENT)
+    await make_indicator(db_session, project, step)
+    other = await make_project(db_session)
+    other_step = await make_step(db_session, other, type_=StepType.ASSESSMENT)
+    other_question = await make_question(db_session, other, other_step)
+    other_answer = await make_answer(db_session, other, other_question, weight=3)
+
+    response = await client.post(
+        f"/v1/{project.code}/poll/summary",
+        json={
+            "answers": [
+                {
+                    "stepId": other_step.id,
+                    "questionId": other_question.id,
+                    "answerId": other_answer.id,
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == 409

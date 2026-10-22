@@ -5,9 +5,8 @@ fergana-women intentionally reuses the exact same regions as zhashyl-climate (sa
 physical breakdown of Kyrgyzstan, not a Fergana-specific one) — confirmed by the
 user. Region/Area rows are project-scoped (via project_id), so they cannot be
 literally shared between two projects; this copies the rows verbatim (same
-code/name/descr/impact/ord) under new primary keys instead. The frontend resolves
-the actual id via region.code at runtime (see calc-web's Region.tsx), so new PKs
-here are transparent to the UI.
+code/name/descr/impact/ord) under their own primary keys instead. Re-runs update
+the rows in place, matched by code, so those keys stay stable.
 
 Usage:
     PYTHONPATH=. uv run python scripts/copy_regions_to_fergana.py
@@ -15,7 +14,7 @@ Usage:
 
 import asyncio
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import SessionLocal
@@ -34,45 +33,53 @@ async def get_project(db: AsyncSession, code: str) -> Project:
 
 
 async def copy_regions(db: AsyncSession, source: Project, target: Project) -> None:
-    await db.execute(delete(Region).where(Region.project_id == target.id))
-    await db.flush()
-
+    """Upsert by code, so re-runs keep the target's Region/Area ids stable (see the
+    note on stable ids in seed_fergana_women.py)."""
     source_regions = (
-        await db.scalars(
-            select(Region).where(Region.project_id == source.id).order_by(Region.ord)
-        )
+        await db.scalars(select(Region).where(Region.project_id == source.id).order_by(Region.ord))
     ).all()
     source_areas = (
         await db.scalars(select(Area).where(Area.project_id == source.id).order_by(Area.ord))
     ).all()
+    target_regions = {
+        r.code: r
+        for r in (await db.scalars(select(Region).where(Region.project_id == target.id))).all()
+    }
 
     areas_by_region_id: dict[int, list[Area]] = {}
     for area in source_areas:
         areas_by_region_id.setdefault(area.region_id, []).append(area)
 
     for region in source_regions:
-        new_region = Region(
-            project_id=target.id,
-            code=region.code,
-            name=region.name,
-            descr=region.descr,
-            ord=region.ord,
-        )
-        db.add(new_region)
+        target_region = target_regions.pop(region.code, None)
+        if target_region is None:
+            target_region = Region(project_id=target.id, code=region.code)
+            db.add(target_region)
+        target_region.name = region.name
+        target_region.descr = region.descr
+        target_region.ord = region.ord
         await db.flush()
 
+        target_areas = {
+            a.code: a
+            for a in (
+                await db.scalars(select(Area).where(Area.region_id == target_region.id))
+            ).all()
+        }
         for area in areas_by_region_id.get(region.id, []):
-            db.add(
-                Area(
-                    project_id=target.id,
-                    region_id=new_region.id,
-                    code=area.code,
-                    name=area.name,
-                    descr=area.descr,
-                    impact=area.impact,
-                    ord=area.ord,
-                )
-            )
+            target_area = target_areas.pop(area.code, None)
+            if target_area is None:
+                target_area = Area(project_id=target.id, region_id=target_region.id, code=area.code)
+                db.add(target_area)
+            target_area.name = area.name
+            target_area.descr = area.descr
+            target_area.impact = area.impact
+            target_area.ord = area.ord
+        for stale in target_areas.values():
+            await db.delete(stale)
+
+    for stale_region in target_regions.values():
+        await db.delete(stale_region)
     await db.flush()
 
 

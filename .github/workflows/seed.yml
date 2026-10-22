@@ -3,12 +3,10 @@ name: Seed fergana-women content
 # Replaces the questionnaire content of project `fergana-women` in production
 # with whatever scripts/data/fergana_women.json holds at the chosen ref.
 #
-# Safe to re-run: the two scripts are idempotent, and the database stores no
-# user submissions (answers travel from the browser to POST /summary and are
-# never persisted). Both scripts must run, in this order —
-# seed_fergana_women.py replaces the project wholesale and the cascade takes
-# the Region/Area rows and the REGION step with it, which the second script
-# puts back.
+# Safe to re-run, also while people are filling in the questionnaire: both
+# scripts update rows in place by code, so ids stay stable, and the database
+# stores no user submissions (answers travel from the browser to POST /summary
+# and are never persisted).
 on:
   workflow_dispatch:
     inputs:
