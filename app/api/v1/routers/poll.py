@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.api.deps import DbSession, LocaleDep, ProjectDep, SecondaryLocaleDep
 from app.schemas.common import ApiResponse
@@ -40,6 +40,12 @@ async def summary(
     secondary: SecondaryLocaleDep,
     db: DbSession,
 ) -> ApiResponse[SummaryOut]:
-    return ApiResponse(
-        data=await summary_service.get_summary(db, project, locale, request, secondary)
-    )
+    try:
+        data = await summary_service.get_summary(db, project, locale, request, secondary)
+    except summary_service.StaleAnswersError as exc:
+        # 409, not 400: the request was valid against the questionnaire the
+        # client loaded, which has since been replaced; reloading fixes it
+        raise HTTPException(
+            status_code=409, detail="The questionnaire has changed, reload the page"
+        ) from exc
+    return ApiResponse(data=data)

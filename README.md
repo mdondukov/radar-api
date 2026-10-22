@@ -281,15 +281,20 @@ PYTHONPATH=. uv run python scripts/seed_fergana_women.py
 PYTHONPATH=. uv run python scripts/copy_regions_to_fergana.py
 ```
 
-**Both scripts must be run together, in that order, every time** —
-`seed_fergana_women.py` replaces `project(code='fergana-women')` wholesale
-(`delete(Project)...`, same idempotent pattern as the zhashyl-climate ETL),
-and the cascade wipes any Region/Area rows and the REGION step, since those
-were added by the *other* script. `copy_regions_to_fergana.py` copies the
-Region/Area tree from `zhashyl-climate` verbatim under new PKs (fergana-women
-intentionally reuses the exact same regions — same physical breakdown of
-Kyrgyzstan, confirmed with the project owner) and inserts a REGION step at
-the front of the step chain. Content currently loaded: 9 indicators, 100
+Both scripts update the project in place, matching rows by their codes
+(`fergana-indicator-N`, `question-N-M`, `answer-N-M-K`, region/area codes):
+existing rows keep their ids, new ones are inserted, rows dropped from the
+JSON are deleted. Ids must stay stable across re-seeds, because a page loaded
+before the re-seed keeps posting the ids it fetched. The seed used to replace
+the project wholesale, which gave every row a new id and silently zeroed the
+radar of everyone mid-questionnaire (22 October 2026); since then
+`POST /summary` also answers 409 to answer ids the project does not have, and
+the frontend asks the reader to reload. `copy_regions_to_fergana.py` keeps the
+Region/Area tree in sync with `zhashyl-climate` (fergana-women intentionally
+reuses the exact same regions - same physical breakdown of Kyrgyzstan,
+confirmed with the project owner) and inserts the REGION step at the front of
+the step chain on the first run; `seed_fergana_women.py` keeps it there. On a
+fresh database run the seed first. Content currently loaded: 9 indicators, 100
 questions, 390 answers, plus the region step and the radar step — 11 steps
 total.
 
