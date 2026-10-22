@@ -1,6 +1,8 @@
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Submission
 from app.models.step import StepType
 from tests.factories import make_answer, make_indicator, make_project, make_question, make_step
 
@@ -170,3 +172,70 @@ async def test_summary_refuses_another_projects_answers(
     )
 
     assert response.status_code == 409
+
+
+async def test_summary_is_stored_for_statistics(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    project = await make_project(db_session)
+    step = await make_step(db_session, project, type_=StepType.ASSESSMENT)
+    await make_indicator(db_session, project, step)
+    question = await make_question(db_session, project, step)
+    answer = await make_answer(db_session, project, question, weight=2)
+    # the endpoint commits, which expires these objects
+    project_id, step_code, question_code = project.id, step.code, question.code
+    answer_id, answer_code = answer.id, answer.code
+
+    response = await client.post(
+        f"/v1/{project.code}/poll/summary",
+        headers={"locale": "ky", "secondary-locale": "ru", "user-agent": "test-agent"},
+        json={
+            "answers": [{"stepId": step.id, "questionId": question.id, "answerId": answer_id}],
+            "sessionId": "session-1",
+            "source": "radar",
+        },
+    )
+    assert response.status_code == 200
+
+    stored = (
+        await db_session.scalars(select(Submission).where(Submission.project_id == project_id))
+    ).all()
+    assert len(stored) == 1
+    record = stored[0]
+    assert (record.session_id, record.source, record.locale, record.secondary_locale) == (
+        "session-1",
+        "radar",
+        "ky",
+        "ru",
+    )
+    assert record.is_complete is True
+    assert record.user_agent == "test-agent"
+    assert record.answers == [
+        {
+            "step_code": step_code,
+            "question_code": question_code,
+            "answer_code": answer_code,
+            "answer_id": answer_id,
+            "weight": 2,
+        }
+    ]
+    assert record.indicators[0]["value"] == 2.0
+
+
+async def test_refused_summary_is_not_stored(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    project = await make_project(db_session)
+    step = await make_step(db_session, project, type_=StepType.ASSESSMENT)
+    await make_indicator(db_session, project, step)
+
+    response = await client.post(
+        f"/v1/{project.code}/poll/summary",
+        json={"answers": [{"stepId": step.id, "questionId": 1, "answerId": 999_999_999}]},
+    )
+    assert response.status_code == 409
+
+    stored = (
+        await db_session.scalars(select(Submission).where(Submission.project_id == project.id))
+    ).all()
+    assert stored == []

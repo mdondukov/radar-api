@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import Field
+
 from app.schemas.common import Schema
 
 
@@ -17,6 +19,9 @@ class RegionSelectIn(Schema):
 class SummaryRequestIn(Schema):
     region: RegionSelectIn | None = None
     answers: list[AnswerSelectIn]
+    # optional, for statistics only (see models.Submission)
+    session_id: str | None = Field(default=None, max_length=64)
+    source: Literal["step", "radar"] | None = None
 
 
 class IndicatorOut(Schema):

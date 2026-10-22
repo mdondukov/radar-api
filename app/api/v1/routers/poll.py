@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Header, HTTPException
 
 from app.api.deps import DbSession, LocaleDep, ProjectDep, SecondaryLocaleDep
 from app.schemas.common import ApiResponse
@@ -6,7 +8,7 @@ from app.schemas.question import QuestionOut
 from app.schemas.region import RegionOut
 from app.schemas.step import StepOut
 from app.schemas.summary import SummaryOut, SummaryRequestIn
-from app.services import poll_service, summary_service
+from app.services import poll_service, submission_service, summary_service
 
 router = APIRouter(prefix="/v1/{project_code}/poll", tags=["poll"])
 
@@ -39,6 +41,7 @@ async def summary(
     locale: LocaleDep,
     secondary: SecondaryLocaleDep,
     db: DbSession,
+    user_agent: Annotated[str | None, Header()] = None,
 ) -> ApiResponse[SummaryOut]:
     try:
         data = await summary_service.get_summary(db, project, locale, request, secondary)
@@ -48,4 +51,7 @@ async def summary(
         raise HTTPException(
             status_code=409, detail="The questionnaire has changed, reload the page"
         ) from exc
+    await submission_service.record(
+        db, project, request, data.indicators, locale, secondary, user_agent
+    )
     return ApiResponse(data=data)
