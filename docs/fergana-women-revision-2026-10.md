@@ -155,6 +155,43 @@ Only where Nursultan changed a term always and without exceptions:
 4. He is going through the texts of other risk zones and the recommendations for worse
    answers separately; results in the next round.
 
+### 3.6. Second pass: worst-answer pages and the translation sheet (20-22 October 2026)
+
+Sources:
+
+- `Айыл чарба_при худших ответах.docx`, `АЙЛАНА-ЧӨЙРӨ_при худших ответах.docx` - the
+  result pages of the two indicators at score 0, rewritten in full (no tracked changes):
+  the description, the recommendations for the worst answers and the high risk text.
+- `Радар_тексты_ru_ky.xlsx` (the translation sheet of 8 September) - 37 rows in six
+  indicators: Settlements, WASH, Local capacity, Gender, Climate risks, Peacebuilding.
+  He edited the «Кыргызский (текущий)» column instead of the green ones, so the edits were
+  found by comparing it with the September content.
+
+What was applied:
+
+- Every rewritten text replaces the current Kyrgyz text in full, including fields already
+  edited in §3.1: the sheet and the files are his latest version. A recommendation shared
+  by several answers of a question (usually weights 0-2) gets the new text in all of them.
+- Row 263: his Kyrgyz text was in the «Правка русского» column; it is taken from there as
+  Kyrgyz, the Russian text is unchanged.
+- Question texts are joined into one line (the question title does not render line breaks).
+
+Fixes on top, per his earlier and later answers:
+
+- «аялуу» → «аярлуу» (4 places in the new texts);
+- «СЭӨПтү» → «СЭӨПны» (he confirmed «СЭӨПны» and «СЭӨПна»);
+- «жыра» → «жар» everywhere (confirmed); after the rewrites no «жыра» was left;
+- environment indicator: «ӨКАЖА» → «ӨКЖА» and «өзгөчө коргоого алынган жаратылыш
+  аймактары» → «өзгөчө корголуучу жаратылыш аймактары», following his new texts.
+
+The Kyrgyz texts are now more detailed than the Russian ones in places (he expanded short
+recommendations). Accepted as is: the Russian text is the expert's and is not extended
+without her.
+
+Not covered yet: «Ирригациялык ресурстар жана инфраструктура» (he is checking it).
+
+After this round he gets a fresh control sheet with all current texts for a final review.
+
 ---
 
 ## 4. Interface
