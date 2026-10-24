@@ -21,6 +21,7 @@ class SummaryRequestIn(Schema):
     answers: list[AnswerSelectIn]
     # optional, for statistics only (see models.Submission)
     session_id: str | None = Field(default=None, max_length=64)
+    device_id: str | None = Field(default=None, max_length=64)
     source: Literal["step", "radar"] | None = None
 
 

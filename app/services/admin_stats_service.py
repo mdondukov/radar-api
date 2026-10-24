@@ -131,6 +131,7 @@ async def get_stats(db: AsyncSession, project: Project, locale: str) -> dict[str
                 "id": s.id,
                 "created_at": s.created_at.isoformat(),
                 "session_id": s.session_id,
+                "device_id": s.device_id,
                 "source": s.source,
                 "is_complete": s.is_complete,
                 "locale": s.locale,

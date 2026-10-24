@@ -192,6 +192,7 @@ async def test_summary_is_stored_for_statistics(
         json={
             "answers": [{"stepId": step.id, "questionId": question.id, "answerId": answer_id}],
             "sessionId": "session-1",
+            "deviceId": "device-1",
             "source": "radar",
         },
     )
@@ -208,6 +209,7 @@ async def test_summary_is_stored_for_statistics(
         "ky",
         "ru",
     )
+    assert record.device_id == "device-1"
     assert record.is_complete is True
     assert record.user_agent == "test-agent"
     assert record.answers == [
