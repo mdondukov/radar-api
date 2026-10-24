@@ -202,6 +202,24 @@ Not applied, as paste errors: rows 120, 122 and 124 (answers «плохо» and 
 own high risk text (row 116); row 144 (question 6) holds the text of question 7. Asked him
 to resend if those rows really need changes.
 
+### 3.8. Control sheet (returned 25 October 2026)
+
+The control sheet of 22 October came back with 15 rows in the green column, nothing else
+changed. Applied:
+
+- irrigation, questions 5 and 6;
+- settlements, questions 11-16: «Төтөнчү кырдаал (ТК)» becomes «Өзгөчө кырдаал (ӨК)», the
+  term already used elsewhere; the last «ТК» (answer «Акыркы жылдары олуттуу ТК болгон
+  эмес») follows. In question 13 his «(Бир нече жоопту тандасаңыз болот.)» is dropped: the
+  page appends the multi-select hint itself;
+- climate risks, question 3;
+- environment, question 1: the text he put in row 9 (an answer of question 1) is a
+  rewording of the question, so it goes to the question; the answer stays;
+- environment, question 3: his new start «Дарыя боюндагы жайылма токойлор» with the 0-3
+  scale kept in brackets, since the buttons are digits.
+
+Not applied, as paste errors: rows 145, 224, 227 and 233 hold the text of another question.
+
 ---
 
 ## 4. Interface
