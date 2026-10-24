@@ -30,6 +30,9 @@ class Submission(Base):
     # random id the page generates once per load: links a reader's block
     # results to their radar without identifying them
     session_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    # random id the browser keeps in localStorage: counts devices, not people
+    # (a shared laptop is one device, incognito or cleared storage is a new one)
+    device_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     # "step" - result page of one block, "radar" - the final radar
     source: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # every question of every indicator answered

@@ -93,6 +93,7 @@ async def _build(
         project_id=project.id,
         project_code=project.code,
         session_id=request.session_id,
+        device_id=request.device_id,
         source=request.source,
         is_complete=bool(question_count) and len(answered) >= (question_count or 0),
         locale=locale,
